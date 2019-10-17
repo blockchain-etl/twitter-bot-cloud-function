@@ -1,0 +1,11 @@
+{
+  "name": "blockchain-etl-twitter-bot",
+  "version": "0.0.1",
+  "description": "Tweet Blockchain ETL messages from Pub/Sub",
+  "main": "index.js",
+  "dependencies": {
+    "semver": "^5.5.1",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4"
+  }
+}
