@@ -9,18 +9,74 @@ module.exports.subscribe = async (data, context, callback) => {
 
     console.log(JSON.stringify(parsedMessage));
 
-    await directMessageInTwitter(`Test message: ${JSON.stringify(parsedMessage)}`);
+    const message = buildTwitterMessage(parsedMessage);
+
+    if (message) {
+        const directMessageRecipientId = getEnvVar('DIRECT_MESSAGE_RECIPIENT_ID', '');
+        if (directMessageRecipientId) {
+            await directMessageInTwitter(message, parseInt(directMessageRecipientId));
+        } else {
+            await postInTwitter(message)
+        }
+    }
 
     callback();
 };
 
-const directMessageInTwitter = async (messageText) => {
+const buildTwitterMessage = (parsedMessage) => {
+    if (!validateParsedMessage(parsedMessage)) {
+        return null;
+    }
+
+    const type = parsedMessage.type;
+
+    let message = null;
+
+    if (type === "anomalous_ether_value") {
+        const value = formatEtherValue(parsedMessage.transaction.value);
+        message = `Transaction with an unusually high value of ${value} ETH: https://etherscan.io/tx/${parsedMessage.transaction.hash}. ` +
+            `Only one transaction had a higher value in the last 7 days.`
+    } else if (type === "anomalous_gas_cost") {
+        const gasCost = formatEtherValue(parsedMessage.gas_cost);
+        message = `Transaction with an unusually high gas cost of ${gasCost} ETH: https://etherscan.io/tx/${parsedMessage.transaction.hash}. ` +
+            `Only one transaction had a higher value in the last 7 days.`
+    }
+
+    return message;
+};
+
+const validateParsedMessage = (parsedMessage) => {
+    if (typeof parsedMessage.type === "undefined") {
+        console.log("type is undefined in parsedMessage");
+        return false;
+    }
+    if (parsedMessage.type === "anomalous_ether_value") {
+        if (typeof parsedMessage.transaction === "undefined" || typeof parsedMessage.transaction.value === "undefined") {
+            console.log("transaction.value is undefined in parsedMessage");
+            return false;
+        }
+    }
+    if (parsedMessage.type === "anomalous_gas_cost") {
+        if (typeof parsedMessage.gas_cost === "undefined") {
+            console.log("transaction.gas_cost is undefined in parsedMessage");
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const postInTwitter = async (messageText) => {
+    // TODO:
+};
+
+const directMessageInTwitter = async (messageText, recipientId) => {
     const message = {
         "event": {
             "type": "message_create",
             "message_create": {
                 "target": {
-                    "recipient_id": 1
+                    "recipient_id": recipientId
                 },
                 "message_data": {
                     "text": messageText,
@@ -52,11 +108,23 @@ const formatAmount = (num) => {
 
 const formatEtherValue = (value) => {
     const adjustedValue = value / Math.pow(10, 18);
-    const formattedValue = formatAmount(adjustedValue);
-    return formattedValue;
+    return formatAmount(adjustedValue);
 };
 
 const parseMessage = (data) => {
     return JSON.parse(new Buffer(data, 'base64').toString());
 };
+
+const getEnvVar = (varName, defaultVal) => {
+    if (typeof process.env[varName] === 'undefined') {
+        if (typeof defaultVal === 'undefined') {
+            throw `${varName} environment variable is not defined - lol.`;
+        } else {
+            return defaultVal
+        }
+    } else {
+        return process.env[varName];
+    }
+};
+
 
