@@ -2,6 +2,7 @@ const request = require('request-promise');
 const Buffer = require('safe-buffer').Buffer;
 
 const NEW_DIRECT_MESSAGE_ENDPOINT = "https://api.twitter.com/1.1/direct_messages/events/new.json";
+const POST_TWEET_ENDPOINT = "https://api.twitter.com/1.1/statuses/update.json";
 const TYPE_ETHEREUM_ANOMALOUS_VALUE = "ethereum_anomalous_value";
 const TYPE_ETHEREUM_ANOMALOUS_GAS_COST = "ethereum_anomalous_gas_cost";
 const TYPE_BITCOIN_ANOMALOUS_VALUE = "bitcoin_anomalous_value";
@@ -82,7 +83,20 @@ const validateParsedMessage = (parsedMessage) => {
 };
 
 const postInTwitter = async (messageText) => {
-    // TODO:
+    const response = await request({
+        url: POST_TWEET_ENDPOINT,
+        oauth: {
+            consumer_key: process.env.APP_KEY,
+            consumer_secret: process.env.APP_SECRET,
+            token: process.env.TOKEN,
+            token_secret: process.env.TOKEN_SECRET
+        },
+        method: "POST",
+        qs: {
+            "status": messageText
+        }
+    });
+    console.log(response);
 };
 
 const directMessageInTwitter = async (messageText, recipientId) => {
