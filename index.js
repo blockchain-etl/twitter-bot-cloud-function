@@ -45,9 +45,8 @@ const buildTwitterMessage = (parsedMessage) => {
         message = `Transaction with an unusually high value of ${value} ETH: https://etherscan.io/tx/${parsedMessage.transaction.hash}. ` +
             `Only one other transaction had a comparable value in the last 7 days.`;
     } else if (type === TYPE_ETHEREUM_ANOMALOUS_GAS_COST) {
-        const gasCost = formatEtherValue(parsedMessage.gas_cost);
-        message = `Transaction with an unusually high gas cost of ${gasCost} ETH: https://etherscan.io/tx/${parsedMessage.transaction.hash}. ` +
-            `Only one other transaction had a comparable value in the last 7 days.`;
+        // skip
+        message = null;
     } else if (type === TYPE_BITCOIN_ANOMALOUS_VALUE) {
         const value = formatBitcoinValue(parsedMessage.transaction.input_value);
         message = `Transaction with an unusually high value of ${value} BTC: https://www.blockchain.com/btc/tx/${parsedMessage.transaction.hash}. ` +
